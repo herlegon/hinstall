@@ -1,2 +1,2 @@
 # hinstall
-Package installation
+Installation package for Herlegon tools

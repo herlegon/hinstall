@@ -1,0 +1,5 @@
+-e ../hytils
+-e ../hwidgets
+PySide6-Essentials
+requests
+websockets

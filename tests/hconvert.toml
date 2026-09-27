@@ -1,0 +1,169 @@
+# Packages
+#===========================================================
+[packages]
+host = "https://github.com/herlegon/rehost/releases/download/external"
+do_cache = false
+
+
+# Windows
+#-----------------------------------------------------------
+# [packages.win32]
+# do_cache = false
+
+[packages.win32.python]
+filename = "python-3.12.10-win-x86_64.tar.gz"
+do_cache = true
+
+[packages.win32.ffmpeg]
+host = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-12-12-12-56/"
+do_cache = true
+
+[packages.win32.ffmpeg.lgpl]
+filename = "ffmpeg-n8.0.1-28-g9c93070155-win64-lgpl-8.0.zip"
+
+[packages.win32.ffmpeg.gpl]
+filename = "ffmpeg-n8.0.1-28-g9c93070155-win64-gpl-8.0.zip"
+
+
+[packages.win32.vspython]
+filename = "vspython.zip"
+skip = true
+
+
+# Linux
+#-----------------------------------------------------------
+[packages.linux.python]
+filename = "python-3.12.12-linux-x86_64.tar.gz"
+do_cache = true
+
+[packages.linux.ffmpeg]
+host = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2025-12-12-12-56/"
+do_cache = true
+
+[packages.linux.ffmpeg.lgpl]
+filename = "ffmpeg-n8.0.1-28-g9c93070155-linux64-lgpl-8.0.tar.xz"
+
+[packages.linux.ffmpeg.gpl]
+filename = "ffmpeg-n8.0.1-28-g9c93070155-linux64-gpl-8.0.tar.xz"
+
+
+# Python packages
+#===========================================================
+[py_packages]
+[py_packages.common]
+pypi = [
+# In python package, because critical or small
+    # "websockets",
+    # "hytils",
+    # "setuptools",
+    # "wheel",
+
+# Upgradable
+    "setuptools",
+    "wheel",
+    "psutil",
+    "nvidia-ml-py",
+    "opencv-python",
+    "numpy",
+    "pillow",
+    "hytils==dev",
+    "hsys==dev",
+    "hinstall==dev",
+
+#     "backend",
+#     "pynnlib",
+
+]
+
+
+# Second pass
+[py_packages.delayed]
+do_cache = true
+
+# [py_packages.delayed.torch]
+# uninstall_before = true
+
+
+# Safetensors
+[py_packages.delayed.safetensors]
+safetensors = "0.7.0"
+do_cache = false
+
+
+# Onnx
+[py_packages.delayed.onnx]
+onnx = "1.19.1"
+onnxruntime = "1.23.2"
+
+
+# PyTorch
+[py_packages.delayed.torch.cuda]
+index-url = "https://download.pytorch.org/whl/cu130"
+torch = "2.9.1+cu130"
+torchvision = "0.24.1+cu130"
+
+[py_packages.delayed.torch.cpu]
+index-url = "https://download.pytorch.org/whl/cpu"
+torch = "2.9.1+cpu"
+torchvision = "0.24.1+cpu"
+
+[py_packages.delayed.torch.rocm]
+index-url = "https://download.pytorch.org/whl/rocm6.4"
+torch = "2.9.1+rocm6.4"
+torchvision = "0.24.1+rocm6.4"
+
+
+# Nvidia TensorRT
+[py_packages.delayed.tensorrt]
+index-url = "https://pypi.nvidia.com"
+tensorrt_cu13_libs = "10.14.1.48.post1"
+tensorrt = "10.14.1.48.post1"
+do_cache = false
+
+# previous version
+# tensorrt-cu12 = "10.14.1.48.post1"
+# tensorrt-cu12-libs = "10.14.1.48.post1"
+
+# small, ignore:
+#   tensorrt
+#   tensorrt-cu13-bindings
+#   tensorrt-cu13
+#   nvidia-cuda-runtime
+
+
+# Microsoft DirectML
+[py_packages.delayed.directml]
+onnxruntime-directml = "1.23.0"
+
+[py_packages.delayed.timm]
+timm = ""
+do_cache = false
+
+
+
+# Pretty names
+#===========================================================
+[packages.names]
+ffmpeg = "FFmpeg"
+vspython = "VS python"
+avs = "AviSynth+ plugins"
+python = "Python"
+
+[py_packages.names]
+directml = "Direct ML"
+numpy = "NumPy"
+nvidia-ml-py = "pyNVML"
+onnx = "ONNX"
+onnxruntime = "ONNX Runtime"
+onnxruntime-directml = "ONNX Runtime (Direct ML)"
+opencv-python = "OpenCV"
+pillow = "Pillow"
+safetensors = "SafeTensors"
+tensorrt = "TensorRT"
+timm = "TIMM"
+torch = "PyTorch"
+torch-cuda = "PyTorch (CUDA)"
+torch-cpu = "PyTorch (CPU)"
+torch-rocm = "PyTorch (ROCm)"
+torchvision = "TorchVision"
+tensorrt_cu13_libs = "TensorRT libraries"
