@@ -1,0 +1,33 @@
+# Packages
+#===========================================================
+[packages]
+host = "https://github.com/herlegon/rehost/releases/download/external"
+do_cache = false
+
+
+# Windows
+#-----------------------------------------------------------
+# [packages.win32]
+# do_cache = false
+[packages.win32.ffmpeg]
+host = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-26-13-03/"
+do_cache = false
+
+[packages.win32.ffmpeg.lgpl]
+filename = "ffmpeg-n9.0.2-10-g51c4a23d74-win64-lgpl-9.0.zip"
+
+
+# Linux
+#-----------------------------------------------------------
+[packages.linux.ffmpeg]
+host = "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-26-13-03/"
+do_cache = true
+
+[packages.linux.ffmpeg.lgpl]
+filename = "ffmpeg-n9.0.2-10-g51c4a23d74-linux64-lgpl-9.0.tar.xz"
+
+
+# Pretty names
+#===========================================================
+[packages.names]
+ffmpeg = "FFmpeg"

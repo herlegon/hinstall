@@ -5,23 +5,40 @@ readme = "README.md"
 authors = [
     { name = "Jep Etau" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 license = "MIT"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.14",
 ]
-dependencies = []
+dependencies = [
+    # requirements-common.txt
+    "requests",
+    "rich",
+    "hsys",
+    "hytils",
+]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+# pip install .[release]
+release = [
+    "hytils @ git+https://github.com/herlegon/hytils.git",
+    "hsys @ git+https://github.com/herlegon/hsys.git",
+]
+# pip install -e .[dev]  +  pip install -e ../hytils ../hsys
+dev = [
+    "hytils",
+    "hsys",
+]
 
 [project.urls]
 Homepage = "https://github.com/herlegon/hinstall"
 
 [build-system]
-requires = ["setuptools >= 80.9.0", "wheel"]
+requires = ["setuptools >= 84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -34,7 +51,7 @@ version = { attr = "hinstall.__version__" }
 
 [tool.black]
 line-length = 90
-target-version = ['py312']
+target-version = ['py314']
 
 [tool.ruff]
 exclude = ["*"]

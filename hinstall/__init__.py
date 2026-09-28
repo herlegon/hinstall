@@ -1,6 +1,6 @@
 __version__ = "1.0"
 
-from .logger import ilog, STATUS_LEVEL, PROGRESS_LEVEL
+from .logger import ilog, STATUS_LEVEL, PROGRESS_LEVEL, RichProgressHandler, setup_alog
 
 from .backend_dirs import g_backend_dirs
 
@@ -10,7 +10,8 @@ from .utils import (
 )
 
 from .ext_package import ExtPackage
-from .ext_packages import ExtPackages
+from .ext_packages import ExtPackages, PACKAGES
+
 from .ext_packages_install import (
     download_install_ext_packages,
 )
@@ -38,7 +39,9 @@ __all__ = [
 
     "ExtPackage",
     "ExtPackages",
+    "PACKAGES",
     "download_install_ext_packages",
+
 
     "PyPackage",
     "PyPackages",
@@ -56,4 +59,7 @@ __all__ = [
 
     "STATUS_LEVEL",
     "PROGRESS_LEVEL",
+    "RichProgressHandler",
+    "setup_alog",
 ]
+

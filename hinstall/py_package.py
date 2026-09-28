@@ -176,7 +176,7 @@ class PyPackage:
             result_str = result.stdout.strip()
 
         except Exception as e:
-            ilog.error(f"Unexpected error: {str(e)}")
+            ilog.error(f"Unexpected error while uninstalling packages: {str(e)}")
             return False
 
         ilog.debug(result_str)
@@ -785,19 +785,29 @@ class PyPackage:
         pnv = "==".join((self.name, self.version)) if self.version else self.name
 
         python_exe = str(g_backend_dirs.python_exe)
-        cmd = f"{python_exe} -m pip install --find-links {cache_dir} {pnv}"
+        cmd = f"{python_exe} -m pip install"
+        if self.do_cache:
+            cmd = f"{cmd} --find-links {cache_dir}"
 
+        cmd = f"{cmd} {pnv}"
+
+        if self.index_url:
+            cmd = f"{cmd} --index-url={self.index_url}"
         if self.extra_index_url:
-            cmd = f"{cmd} --extra-index-url={self.extra_index_url}"
+            cmd = f"{cmd} --extra_index_url-url={self.extra_index_url}"
         if reinstall:
             cmd = f"{cmd} --force-reinstall"
         if recover:
             cmd = f"{cmd} --force-reinstall --ignore-installed"
 
-
         ilog.debug(cmd)
 
-        env = generate_backend_env(exclude_append=['proxy',])
+        env = None
+        ilog_print = ilog.info
+        if g_backend_dirs.python_exe != sys.executable:
+            env = generate_backend_env(exclude_append=['proxy',])
+            ilog_print = ilog.debug
+
         try:
             process: subprocess.Popen = subprocess.Popen(
                 cmd.split(),
@@ -810,7 +820,7 @@ class PyPackage:
             stdout: io.TextIOWrapper = process.stdout
             last_line: str = ""
             for line in stdout:
-                ilog.debug(f"pip: {line.rstrip()}")
+                ilog.info(f"pip: {line.rstrip()}")
                 last_line = line
             process.communicate(timeout=10)
 
@@ -818,7 +828,7 @@ class PyPackage:
                 "Successfully installed" in last_line
                 or "Requirement already satisfied"  in last_line
             ):
-                ilog.debug(f"Successfully installed {self.name}")
+                ilog_print(f"[{self.name}] Successfully installed")
                 return True
 
             else:

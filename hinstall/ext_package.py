@@ -1,15 +1,12 @@
 
 from dataclasses import dataclass
-from datetime import datetime
-import os
-from pprint import pprint
 import tempfile
 from hytils import get_extension
 from pathlib import Path
 import re
 import shutil
 import requests
-from urllib.error import URLError
+import time
 
 from .backend_dirs import g_backend_dirs
 from .utils import (
@@ -20,6 +17,8 @@ from .utils import (
     get_domain_from_url,
 )
 from .logger import ilog
+from .api import InstallProgress
+
 
 
 
@@ -110,7 +109,7 @@ class ExtPackage:
             tag_fp: Path = self.install_dir / self.tag
             if tag_fp.exists():
                 self.installed = True
-                ilog.info(f"{self.name} already installed and up-to-date")
+                ilog.info(f"{self.name}: already installed and up-to-date")
                 return True
 
         return None
@@ -202,14 +201,74 @@ class ExtPackage:
             self._update_cache_file()
             cache_dir = self.cache_file.parent
             cache_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy(local_fp, cache_dir)
+            file_size = local_fp.stat().st_size
+            ilog.progress(
+                InstallProgress(
+                    package_name=self.name,
+                    status='downloading',
+                    type='progress',
+                    progress=0.0,
+                    total=file_size,
+                    completed=0,
+                    unit='B',
+                    description=f"Copying {self.name}",
+                )
+            )
+
+            with open(local_fp, 'rb') as src, open(self.cache_file, 'wb') as dst:
+                copied = 0
+                last_time = time.time()
+                while True:
+                    buf = src.read(1024 * 1024)
+                    if not buf:
+                        break
+                    dst.write(buf)
+                    copied += len(buf)
+                    current_time = time.time()
+                    if current_time - last_time >= 0.1 and file_size > 0:
+                        pct = min(100.0 * copied / file_size, 100.0)
+                        ilog.progress(
+                            InstallProgress(
+                                package_name=self.name,
+                                status='downloading',
+                                type='progress',
+                                progress=pct,
+                                total=file_size,
+                                completed=copied,
+                                unit='B',
+                                description=f"Copying {self.name}",
+                            )
+                        )
+                        last_time = current_time
+
             (cache_dir / self.tag).touch(exist_ok=True)
             ilog.debug(f"Copied to {cache_dir}")
             self.downloaded = True
+            ilog.progress(
+                InstallProgress(
+                    package_name=self.name,
+                    status='success',
+                    type='progress',
+                    progress=100.0,
+                    total=file_size,
+                    completed=file_size,
+                    unit='B',
+                    description=f"Copied {self.name}",
+                )
+            )
 
         else:
             ilog.error(f"File is missing: {local_fp}")
             self.downloaded = False
+            ilog.progress(
+                InstallProgress(
+                    package_name=self.name,
+                    status='failed',
+                    type='progress',
+                    progress=0.0,
+                    description=f"Missing {self.name}",
+                )
+            )
 
         if self.downloaded:
             ilog.status(f"[ed]{self.name}")
@@ -246,45 +305,91 @@ class ExtPackage:
             ilog.status(f"[sd]{self.name}")
             ilog.status(f"[pg]0.")
 
-            response = requests.get(
-                url,
-                stream=True,
-                timeout=10,
-                allow_redirects=True
-            )
-            response.raise_for_status()
+            try:
+                response = requests.get(
+                    url,
+                    stream=True,
+                    timeout=10,
+                    allow_redirects=True
+                )
+                response.raise_for_status()
 
-            with open(self.cache_file, "wb") as f:
-                # try:
-                    response.raw.decode_content = True
+                content_len = response.headers.get('content-length')
+                total_size = int(content_len) if content_len and content_len.isdigit() else self.size
+                if self.size == 0 and total_size > 0:
+                    self.size = total_size
 
-                    # Update every 512KB
-                    wrapper = ProgressWrapper(
-                        response.raw,
-                        total_size=self.size,
-                        update_threshold=512*1024,
+                ilog.progress(
+                    InstallProgress(
+                        package_name=self.name,
+                        status='downloading',
+                        type='progress',
+                        progress=0.0,
+                        total=total_size,
+                        completed=0,
+                        unit='B',
+                        description=f"Downloading {self.name}",
                     )
+                )
 
-                    # 256KB buffer
-                    shutil.copyfileobj(wrapper, f, length=256*1024)
-                    # Update any remaining bytes
-                    wrapper.flush_progress()
+                downloaded = 0
+                last_time = time.time()
+                with open(self.cache_file, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=256 * 1024):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            current_time = time.time()
+                            if current_time - last_time >= 0.1 and total_size > 0:
+                                pct = min(100.0 * downloaded / total_size, 100.0)
+                                ilog.progress(
+                                    InstallProgress(
+                                        package_name=self.name,
+                                        status='downloading',
+                                        type='progress',
+                                        progress=pct,
+                                        total=total_size,
+                                        completed=downloaded,
+                                        unit='B',
+                                        description=f"Downloading",
+                                    )
+                                )
+                                last_time = current_time
 
-                # except Exception as e:
-                #     ilog.debug(f"[W] Retry to download. Reason: {type(e)}")
-                #     _retry -= 1
+                tag_file.touch()
+                self.downloaded = True
+                ilog.status(f"[ed]{self.name}")
+                ilog.progress(
+                    InstallProgress(
+                        package_name=self.name,
+                        status='success',
+                        type='progress',
+                        progress=100.0,
+                        total=total_size if total_size > 0 else downloaded,
+                        completed=downloaded,
+                        unit='B',
+                        description=f"Downloaded",
+                    )
+                )
+                return True
 
-            if _retry == 0:
-                ilog.debug(f"[E] failed to download {self.filename}")
-                ilog.status(f"[df]{self.name}")
-                return False
+            except Exception as e:
+                ilog.debug(f"[W] Retry to download. Reason: {type(e)} - {str(e)}")
+                _retry -= 1
+                if _retry == 0:
+                    ilog.debug(f"[E] failed to download {self.filename}")
+                    ilog.status(f"[df]{self.name}")
+                    ilog.progress(
+                        InstallProgress(
+                            package_name=self.name,
+                            status='failed',
+                            type='progress',
+                            progress=0.0,
+                            description=f"Failed {self.name}",
+                        )
+                    )
+                    return False
 
-            _retry = 0
-
-        tag_file.touch()
-        self.downloaded = True
-        ilog.status(f"[ed]{self.name}")
-        return True
 
 
 
@@ -342,7 +447,7 @@ class ExtPackage:
                     )
                     installed = True
             except Exception as e:
-                ilog.error(f"Failed to untar {self.cache_file}. Reason: {str(e)}")
+                ilog.error(f"Failed to unzip {self.cache_file}. Reason: {str(e)}")
 
         else:
             try:
@@ -358,10 +463,29 @@ class ExtPackage:
 
             ilog.debug(f"{self.name} installed in {install_dir}")
             ilog.status(f"[ei]{self.name}")
+            ilog.progress(
+                InstallProgress(
+                    package_name=self.name,
+                    status='success',
+                    type='progress',
+                    progress=100.0,
+                    description=f"Installed {self.name}",
+                )
+            )
 
         else:
             ilog.status(f"[if]{self.name}")
+            ilog.progress(
+                InstallProgress(
+                    package_name=self.name,
+                    status='failed',
+                    type='progress',
+                    progress=0.0,
+                    description=f"Installation failed: {self.name}",
+                )
+            )
 
         self.installed = installed
 
         return installed
+

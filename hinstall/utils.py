@@ -8,6 +8,7 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urlparse
 
 from .logger import ilog
+from .api import InstallProgress
 
 
 
@@ -92,7 +93,8 @@ def extract_zip_file(
         """Check if any part of the path matches excluded names"""
         return any(part in exclude for part in path.parts) or path.name in exclude
 
-    all_files = compressed_data.namelist()
+    all_files = [f for f in compressed_data.namelist() if not f.endswith('/')]
+    total_files = len(all_files)
 
     # Check for single root folder
     root_folders = set()
@@ -104,18 +106,23 @@ def extract_zip_file(
     has_single_root = len(root_folders) == 1
     root_folder = root_folders.pop() if has_single_root else None
 
-    # Calculate total size
-    total_bytes = sum(
-        compressed_data.getinfo(f).file_size
-        for f in all_files
-        if not f.endswith('/')
+    ilog.progress(
+        InstallProgress(
+            package_name=pkg_name,
+            status='installing',
+            type='progress',
+            progress=0.0,
+            total=total_files,
+            completed=0,
+            unit='files',
+            description=f"Extracting {pkg_name}",
+        )
     )
 
+    extracted_count = 0
+    last_time = time.time()
     # Extract files
     for file in all_files:
-        if file.endswith('/'):
-            continue
-
         file_path = Path(file)
 
         # Handle single root folder
@@ -124,8 +131,6 @@ def extract_zip_file(
                 continue
             file_path = file_path.relative_to(root_folder)
 
-        file_size = compressed_data.getinfo(file).file_size
-
         if not should_exclude(file_path):
             target_path = install_dir / file_path
             target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -133,7 +138,25 @@ def extract_zip_file(
             with compressed_data.open(file) as source:
                 target_path.write_bytes(source.read())
 
-        ilog.status(f"[pg]{min(100. * file_size/total_bytes, 100):.1f}")
+        extracted_count += 1
+        current_time = time.time()
+        if current_time - last_time >= 0.1 or extracted_count == total_files:
+            pct = min(100.0 * extracted_count / total_files, 100.0) if total_files else 100.0
+            ilog.status(f"[pg]{pct:.1f}")
+            ilog.progress(
+                InstallProgress(
+                    package_name=pkg_name,
+                    status='installing',
+                    type='progress',
+                    progress=pct,
+                    total=total_files,
+                    completed=extracted_count,
+                    unit='files',
+                    description=f"Extracting {pkg_name}",
+                )
+            )
+            last_time = current_time
+
     ilog.status(f"[ei]{pkg_name}")
 
 
@@ -159,7 +182,7 @@ def extract_tar_file(
             install_dir,
             exclude,
         )
-    print(f"elapsed: {time.time() - start_time}")
+    ilog.debug(f"elapsed: {time.time() - start_time:.2f}s")
 
 
 def _extract_tar_file_file_size(
@@ -262,6 +285,18 @@ def _extract_tar_file_file_count(
     root_folder = next(iter(root_folders)) if has_single_root else None
 
     ilog.info(f"Extract {total_files} files")
+    ilog.progress(
+        InstallProgress(
+            package_name=pkg_name,
+            status='installing',
+            type='progress',
+            progress=0.0,
+            total=total_files,
+            completed=0,
+            unit='files',
+            description=f"Extracting {pkg_name}",
+        )
+    )
 
     # Extract files
     extracted_count = 0
@@ -271,40 +306,56 @@ def _extract_tar_file_file_count(
 
         # handle single root folder
         if has_single_root and root_folder:
-            if file_path.parts[0] == root_folder:
+            if file_path.parts and file_path.parts[0] == root_folder:
                 file_path = file_path.relative_to(root_folder)
 
         # skip excluded
         # if should_exclude(file_path):
         #     ilog.info(f"{task_name}progress={extracted_count}")
 
-        target_path = install_dir / file_path
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+        if not should_exclude(file_path):
+            target_path = install_dir / file_path
+            target_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # regular file
-        if member.isfile():
-            source = compressed_data.extractfile(member)
-            if source:
-                target_path.write_bytes(source.read())
-            os.chmod(target_path, member.mode)
+            # regular file
+            if member.isfile():
+                source = compressed_data.extractfile(member)
+                if source:
+                    target_path.write_bytes(source.read())
+                os.chmod(target_path, member.mode)
 
-        # symbolic link
-        elif member.issym():
-            if target_path.exists() or target_path.is_symlink():
-                target_path.unlink()
-            target_path.symlink_to(member.linkname)
+            # symbolic link
+            elif member.issym():
+                if target_path.exists() or target_path.is_symlink():
+                    target_path.unlink()
+                target_path.symlink_to(member.linkname)
 
-        # hard link
-        elif member.islnk():
-            link_target = Path(member.linkname)
-            if has_single_root and root_folder and link_target.parts[0] == root_folder:
-                link_target = link_target.relative_to(root_folder)
-            target_path.hardlink_to(install_dir / link_target)
+            # hard link
+            elif member.islnk():
+                link_target = Path(member.linkname)
+                if has_single_root and root_folder and link_target.parts and link_target.parts[0] == root_folder:
+                    link_target = link_target.relative_to(root_folder)
+                target_path.hardlink_to(install_dir / link_target)
 
-        # update progress
-        if time.time() - last_time >= 0.1:
-            ilog.status(f"[pg]{min(100. * extracted_count/total_files, 100):.1f}")
-            last_time = time.time()
         extracted_count += 1
+        current_time = time.time()
+        # update progress
+        if current_time - last_time >= 0.1 or extracted_count == total_files:
+            pct = min(100.0 * extracted_count / total_files, 100.0) if total_files else 100.0
+            ilog.status(f"[pg]{pct:.1f}")
+            ilog.progress(
+                InstallProgress(
+                    package_name=pkg_name,
+                    status='installing',
+                    type='progress',
+                    progress=pct,
+                    total=total_files,
+                    completed=extracted_count,
+                    unit='files',
+                    description=f"Extracting {pkg_name}",
+                )
+            )
+            last_time = current_time
 
     ilog.status(f"[ei]{pkg_name}")
+

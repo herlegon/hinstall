@@ -183,7 +183,7 @@ def update_pip(python_exe: Path | None = None) -> bool:
 
     except Exception as e:
         # Catch all other unexpected errors
-        ilog.error(f"Unexpected error: {str(e)}")
+        ilog.error(f"Unexpected error while updating pip: {str(e)}")
         return False
 
     ilog.debug(result.stdout.strip())
@@ -215,7 +215,7 @@ def get_pypackage_list(python_exe: Path | None = None) -> str:
 
     except Exception as e:
         # Catch all other unexpected errors
-        ilog.error(f"Unexpected error: {str(e)}")
+        ilog.error(f"Unexpected error while listing current python packages: {str(e)}")
 
     return result_str
 

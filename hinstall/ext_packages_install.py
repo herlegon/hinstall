@@ -10,11 +10,11 @@ def download_package_(
     reinstall: bool = False,
 ) -> ExtPackage:
 
-    if package.is_up_to_date() and not reinstall:
+    if not reinstall and package.is_up_to_date():
         package.clean_cache()
         return package
 
-    if package.is_installed() and not reinstall:
+    if not reinstall and package.is_installed(up_to_date=False):
         if not package.do_cache:
             try:
                 package.cache_file.unlink()
@@ -22,6 +22,7 @@ def download_package_(
                 pass
         package.clean_cache()
         return package
+
 
     # Dowanload an install
     package.installed = False

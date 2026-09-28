@@ -48,3 +48,9 @@ class InstallProgress:
     status: str = ""
     type: Literal['progress', 'indet'] = 'progress'
     progress: float = 0.
+    total: int = 0
+    completed: int = 0
+    speed: float = 0.0
+    unit: str = ""
+    description: str = ""
+

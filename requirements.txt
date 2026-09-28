@@ -1,5 +1,3 @@
--e ../hytils
--e ../hwidgets
-PySide6-Essentials
-requests
-websockets
+-r requirements-common.txt
+git+https://github.com/herlegon/hytils.git
+git+https://github.com/herlegon/hsys.git

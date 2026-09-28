@@ -196,7 +196,6 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-
     for pkg in py_packages.get_by_execution_provider('cuda'):
         pkg.skip = not cuda
         pkg.supported = cuda
@@ -213,7 +212,6 @@ if __name__ == "__main__":
     for pkg in py_packages.get_by_execution_provider('cpu'):
         pkg.skip = not cpu_fallback
         pkg.supported = cpu_fallback
-
 
     print("supported packages")
     supported_pkgs = py_packages.get_delayed(supported_only=True)

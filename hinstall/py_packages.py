@@ -93,7 +93,7 @@ class PyPackages(list):
         # Process delayed packages
         delayed: dict[str, Any] = platform_data.get('delayed', {})
         property_keys: tuple[str] = (
-            'extra-index-url',
+            'extra_index_url',
             'index-url',
             'do_cache',
             'uninstall_before',
@@ -106,7 +106,7 @@ class PyPackages(list):
                 continue
 
             skip = category_data.get('skip', delayed.get('skip', False))
-            extra_index_url = category_data.get('extra-index-url', delayed.get('extra-index-url', ''))
+            extra_index_url = category_data.get('extra_index_url', delayed.get('extra_index_url', ''))
             index_url = category_data.get('index-url', delayed.get('index-url', ''))
             do_cache = category_data.get('do_cache', delayed.get('do_cache', False))
             uninstall_before = category_data.get('uninstall_before', delayed.get('uninstall_before', False))
@@ -127,7 +127,7 @@ class PyPackages(list):
                             continue
 
                         skip = value.get('skip', skip)
-                        variant_extra_index = value.get('extra-index-url', extra_index_url)
+                        variant_extra_index = value.get('extra_index_url', extra_index_url)
                         index_url = value.get('index-url', index_url)
                         do_cache = value.get('do_cache', do_cache)
                         uninstall_before = (
@@ -186,7 +186,7 @@ class PyPackages(list):
                             ep=ep,
                         )
                     )
-        # raise
+
         if keep_up_to_date:
             self.update_latest_versions()
         self.update_installed_versions()
@@ -225,7 +225,7 @@ class PyPackages(list):
 
             except Exception as e:
                 # Catch all other unexpected errors
-                ilog.error(f"Unexpected error: {str(e)}")
+                ilog.error(f"Unexpected error while fetching installed python packages: {str(e)}")
 
         else:
             # Doesn't work if this function is not executed in standalone env
@@ -248,7 +248,7 @@ class PyPackages(list):
     def update_latest_versions(self) -> None:
         cpu_count = multiprocessing.cpu_count()
         cpu_count = max(cpu_count - 1, int(cpu_count * 4 / 5))
-        with ThreadPoolExecutor(max_workers=min(cpu_count, len(self))) as executor:
+        with ThreadPoolExecutor(max_workers=max(1, min(cpu_count, len(self)))) as executor:
             executor.map(lambda pkg: pkg.update_info(), self)
 
 

@@ -54,8 +54,9 @@ def get_backend_dirs(
         cache=cache_dir,
         models=base / organization / "models",
     )
-g_backend_dirs: BackendDirectories = get_backend_dirs()
 
+
+g_backend_dirs: BackendDirectories = get_backend_dirs()
 
 
 def get_local_dev_dir(organization: str = ORGANIZATION) -> Path:
