@@ -24,10 +24,7 @@ from .backend_dirs import g_backend_dirs, get_local_dev_dir
 from .py_packages_install import (
     generate_backend_env,
 )
-try:
-    from hwss.api import InstallProgress
-except ImportError:
-    from .api import InstallProgress
+from .api import InstallProgress
 
 
 @dataclass

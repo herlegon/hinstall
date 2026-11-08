@@ -31,6 +31,8 @@ from .py_packages_install import (
     clean_invalid_distributions,
 )
 
+from .download_models import download_models
+
 __all__ = [
     "ilog",
 
@@ -42,13 +44,11 @@ __all__ = [
     "PACKAGES",
     "download_install_ext_packages",
 
-
     "PyPackage",
     "PyPackages",
     "get_python_version",
     "generate_backend_env",
     "g_backend_env",
-
 
     "get_domain_from_url",
     "check_site_reachable",
@@ -56,6 +56,8 @@ __all__ = [
     "clean_invalid_distributions",
     "get_pypackage_list",
     "get_py_package_versions",
+
+    "download_models",
 
     "STATUS_LEVEL",
     "PROGRESS_LEVEL",
