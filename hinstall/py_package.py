@@ -409,7 +409,7 @@ class PyPackage:
             else:
                 compute_platform = 'cpu'
 
-            wheel_url = f"https://download.pytorch.org/whl/{compute_platform}/{quote(self.wheel)}"
+            wheel_url = f"https://download-r2.pytorch.org/whl/{compute_platform}/{quote(self.wheel)}"
 
             # Step 5: Check wheel existence (HEAD request)
             response = requests.head(wheel_url, allow_redirects=True, timeout=10)

@@ -10,3 +10,13 @@ Installation package for Herlegon tools
 
 ### Tests
 - FFmpeg: `python tests/test_install_packages.py`
+
+
+### App installation
+```sh
+conda create -n r python=3.14
+conda activate r
+python install.py
+conda deactivate
+conda env remove --name r
+```
