@@ -401,7 +401,10 @@ class PyPackage:
 
             # arch = "win_amd64"
             # Step 4: Construct wheel filename
-            self.wheel = f"{self.name}-{version}-py3-none-{arch}.whl"
+            if 'torchvision' in self.name:
+                self.wheel = f"{self.name}-{version}-py3-none-{arch}.whl"
+            else:
+                self.wheel = f"{self.name}-{version}-cp{python_version}-cp{python_version}-{arch}.whl"
 
             # URL encode '+' in the version string
             if '+' in version:
