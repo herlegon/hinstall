@@ -161,29 +161,27 @@ def get_python_version(python_exe: Path | None = None) -> str:
 
 
 
-def update_pip(python_exe: Path | None = None) -> bool:
+def update_pip(python_exe: Path | str | None = None, timeout: float = 120) -> bool:
     python_exe = str(g_backend_dirs.python_exe if python_exe is None else python_exe)
 
-    pip_command: str = f"{python_exe} -m pip install --upgrade pip"
+    pip_command = [python_exe, "-m", "pip", "install", "--upgrade", "pip"]
     try:
         result = subprocess.run(
-            pip_command.split(' '),
+            pip_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            timeout=10,
+            timeout=timeout,
             check=True,
             text=True,
             env=g_backend_env,
         )
 
     except subprocess.CalledProcessError as e:
-        # Specific error if subprocess fails
-        ilog.error(f"Error occurred while updating pip: {str(e)}")
+        ilog.error(f"Error occurred while updating pip: {e}\n{e.stdout}")
         return False
 
     except Exception as e:
-        # Catch all other unexpected errors
-        ilog.error(f"Unexpected error while updating pip: {str(e)}")
+        ilog.error(f"Unexpected error while updating pip: {e}")
         return False
 
     ilog.debug(result.stdout.strip())

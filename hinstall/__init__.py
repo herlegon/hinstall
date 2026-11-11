@@ -30,6 +30,7 @@ from .py_packages_install import (
     get_py_package_versions,
     clean_invalid_distributions,
 )
+from .app_packages import install_app_packages
 
 from .download_models import download_models
 
@@ -56,6 +57,7 @@ __all__ = [
     "clean_invalid_distributions",
     "get_pypackage_list",
     "get_py_package_versions",
+    "install_app_packages",
 
     "download_models",
 
