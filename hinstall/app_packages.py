@@ -103,22 +103,22 @@ def install_app_packages(
     cuda = is_feature_supported('cuda')
     tensorrt = is_feature_supported('tensorrt')
     directml = is_feature_supported('directml')
-    rocm = is_feature_supported('rocm')
+    # rocm = is_feature_supported('rocm')
 
     execution_providers = [
         f"CUDA: {'✅' if cuda else '❌'}",
         f"TensorRT: {'✅' if tensorrt else '❌'}",
-        f"direct ML: {'✅' if directml else '❌'}",
-        f"RocM: {'✅' if rocm else '❌'}",
+        # f"direct ML: {'✅' if directml else '❌'}",
+        # f"RocM: {'✅' if rocm else '❌'}",
     ]
     ilog.info(f"Supported execution providers\n  " + "\n  ".join(execution_providers))
     start_time = time.time()
 
     support = {
         "cuda": cuda,
-        "rocm": rocm,
-        "directml": directml,
-        "cpu": not (cuda or tensorrt or rocm),  # fallback
+        # "rocm": rocm,
+        # "directml": directml,
+        "cpu": not (cuda or tensorrt),  # fallback
     }
     for provider, supported in support.items():
         for pkg in py_packages.get_by_execution_provider(provider):
