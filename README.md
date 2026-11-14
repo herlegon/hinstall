@@ -14,6 +14,8 @@ Installation package for Herlegon tools
 
 ### App installation
 ```sh
+conda update conda
+conda update --all --name base
 conda create -n r python=3.14
 conda activate r
 python install.py

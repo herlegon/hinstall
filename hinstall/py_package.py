@@ -99,8 +99,9 @@ class PyPackage:
         import requests
         from html.parser import HTMLParser
 
+        if not self.index_url:
+            return True
         index_url = f"{self.index_url}/{self.name.replace('_', '-')}/"
-        # ilog.debug(f"index_url: {index_url}")
 
         # Fetch HTML index
         try:
@@ -434,7 +435,7 @@ class PyPackage:
         if 'torch' in self.name:
             self.resolve_torch_wheel()
 
-        elif 'tensorrt' in self.name:
+        elif 'tensorrt_libs' in self.name:
             self.resolve_tensorrt_wheel()
             return
 

@@ -64,6 +64,39 @@ def install_app_packages(
         sys.platform,
         keep_up_to_date=keep_up_to_date
     )
+    initial_pkgs = py_packages.get_initial()
+
+    cpu_count = multiprocessing.cpu_count()
+    cpu_count = max(cpu_count - 1, int(cpu_count * 4 / 5))
+
+    uninstalled_pkgs = initial_pkgs.get_not_installed()
+    if uninstalled_pkgs:
+        start_time = time.time()
+        with ThreadPoolExecutor(max_workers=min(cpu_count, len(uninstalled_pkgs))) as executor:
+            executor.map(lambda pkg: pkg.update_info(), uninstalled_pkgs)
+
+        elapsed = time.time() - start_time
+        for pkg in uninstalled_pkgs:
+            pkg: PyPackage
+            ilog.debug(f"{lightcyan(pkg.name)}:\n    latest version: {pkg.latest_version}\n    selected: {pkg.version}")
+            ilog.debug(f"    variant: {pkg.variant}")
+            ilog.debug(f"    installed version: {pkg.installed_version}")
+            ilog.debug(f"    wheel: {pkg.wheel}")
+            ilog.debug(f"    wheel url: {pkg.wheel_url}")
+            ilog.debug(f"    size: {pkg.size // 1024}kB")
+        ilog.info(f"updated in {elapsed:.02f}s")
+
+    print("Packages to install: ", lightcyan(", ".join((pkg.name for pkg in uninstalled_pkgs))))
+
+    do_download = True
+    for pkg in uninstalled_pkgs:
+        if do_download and pkg.do_cache:
+            start_time = time.time()
+            downloaded = pkg.download_wheel(force=False, use_pip=False)
+            elapsed = time.time() - start_time
+            ilog.debug(f"Downloaded {pkg.name} in {elapsed:.02f}s")
+        pkg.install()
+
 
     # hsys was installed in the fisrt round
     from hsys import is_feature_supported
