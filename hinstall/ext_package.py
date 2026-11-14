@@ -170,22 +170,24 @@ class ExtPackage:
         ilog.debug(f"Clean cache")
         if self.cache_file is None:
             return
-        for file in self.cache_file.parent.iterdir():
-            if (
-                file.is_file()
-                and file.name.startswith(self.key)
-                and file.name not in (
-                    self.tag,
-                    self.filename
-                )
-            ):
-                file.unlink()
+        if self.cache_file.parent.is_dir():
+            for file in self.cache_file.parent.iterdir():
+                if (
+                    file.is_file()
+                    and file.name.startswith(self.key)
+                    and file.name not in (
+                        self.tag,
+                        self.filename
+                    )
+                ):
+                    file.unlink()
 
         if not self.do_cache:
             ilog.debug(f"Remove cached installed files")
-            for file in self.cache_file.parent.iterdir():
-                if file.is_file() and file.name.startswith(self.key):
-                    file.unlink()
+            if self.cache_file.parent.is_dir():
+                for file in self.cache_file.parent.iterdir():
+                    if file.is_file() and file.name.startswith(self.key):
+                        file.unlink()
 
 
 
